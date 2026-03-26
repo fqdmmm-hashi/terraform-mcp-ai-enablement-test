@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terraform + AI · Internal Enablement</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c0f;
+    --bg2: #0f1217;
+    --bg3: #141820;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e8eaf0;
+    --text2: #8a8fa8;
+    --text3: #555a70;
+    --accent: #5b8af5;
+    --accent2: #3d6de8;
+    --teal: #2dd4a8;
+    --amber: #f5a623;
+    --purple: #a78bfa;
+    --mono: 'DM Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+    --display: 'Syne', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.65;
+    overflow-x: hidden;
+  }
+
+  /* ── Grid noise overlay ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── Top accent line ── */
+  .top-bar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent2), var(--teal), var(--purple));
+    z-index: 100;
+  }
+
+  /* ── Nav ── */
+  nav {
+    position: fixed;
+    top: 2px; left: 0; right: 0;
+    height: 52px;
+    background: rgba(10,12,15,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 32px;
+    z-index: 99;
+    gap: 32px;
+  }
+
+  .nav-logo {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text2);
+    letter-spacing: 0.04em;
+    margin-right: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .nav-logo span {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--teal);
+    display: inline-block;
+    animation: pulse 2.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 24px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--text3);
+    text-decoration: none;
+    letter-spacing: 0.06em;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--text); }
+
+  .nav-badge {
+    font-size: 10px;
+    font-family: var(--mono);
+    background: rgba(91,138,245,0.1);
+    color: var(--accent);
+    border: 1px solid rgba(91,138,245,0.2);
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.06em;
+  }
+
+  /* ── Page sections ── */
+  .section {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    padding-top: 140px;
+    padding-bottom: 80px;
+    position: relative;
+  }
+
+  .hero-glow {
+    position: absolute;
+    top: 80px;
+    left: -100px;
+    width: 500px;
+    height: 400px;
+    background: radial-gradient(ellipse, rgba(91,138,245,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--teal);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    animation: fadeUp 0.6s ease forwards 0.1s;
+  }
+  .hero-eyebrow::before {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 1px;
+    background: var(--teal);
+  }
+
+  .hero-title {
+    font-family: var(--display);
+    font-size: clamp(36px, 5vw, 56px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 24px;
+    opacity: 0;
+    animation: fadeUp 0.6s ease forwards 0.2s;
+  }
+
+  .hero-title em {
+    font-style: normal;
+    background: linear-gradient(135deg, var(--accent), var(--teal));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-sub {
+    font-size: 16px;
+    color: var(--text2);
+    max-width: 540px;
+    line-height: 1.7;
+    margin-bottom: 36px;
+    font-weight: 300;
+    opacity: 0;
+    animation: fadeUp 0.6s ease forwards 0.3s;
+  }
+
+  .hero-tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    opacity: 0;
+    animation: fadeUp 0.6s ease forwards 0.4s;
+  }
+
+  .tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 4px;
+    letter-spacing: 0.04em;
+    border: 1px solid;
+  }
+  .tag-blue { color: var(--accent); border-color: rgba(91,138,245,0.25); background: rgba(91,138,245,0.06); }
+  .tag-teal { color: var(--teal); border-color: rgba(45,212,168,0.25); background: rgba(45,212,168,0.06); }
+  .tag-amber { color: var(--amber); border-color: rgba(245,166,35,0.25); background: rgba(245,166,35,0.06); }
+  .tag-purple { color: var(--purple); border-color: rgba(167,139,250,0.25); background: rgba(167,139,250,0.06); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Section headers ── */
+  .sec-header {
+    margin-bottom: 24px;
+    padding-top: 60px;
+  }
+
+  .sec-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 8px;
+  }
+
+  .sec-title {
+    font-family: var(--display);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  /* ── Divider ── */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 48px 0;
+  }
+
+  /* ── Path cards ── */
+  .path-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .path-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    position: relative;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+  }
+
+  .path-card:hover {
+    border-color: var(--border2);
+    background: var(--bg3);
+    transform: translateY(-2px);
+  }
+
+  .path-card.featured {
+    border-color: rgba(91,138,245,0.3);
+    background: rgba(91,138,245,0.04);
+  }
+  .path-card.featured:hover {
+    border-color: rgba(91,138,245,0.5);
+    background: rgba(91,138,245,0.07);
+  }
+
+  .card-rec {
+    position: absolute;
+    top: 16px; right: 16px;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: rgba(91,138,245,0.1);
+    border: 1px solid rgba(91,138,245,0.2);
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+
+  .card-icon {
+    font-size: 22px;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .card-title {
+    font-family: var(--display);
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    letter-spacing: -0.01em;
+  }
+
+  .card-desc {
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.6;
+    font-weight: 300;
+    margin-bottom: 16px;
+  }
+
+  .card-arrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+  }
+  .card-arrow-blue { color: var(--accent); }
+  .card-arrow-teal { color: var(--teal); }
+  .card-arrow-amber { color: var(--amber); }
+
+  /* ── Track cards ── */
+  .track-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .track-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    transition: border-color 0.2s, transform 0.15s;
+  }
+  .track-card:hover {
+    border-color: rgba(45,212,168,0.3);
+    transform: translateY(-2px);
+  }
+
+  .track-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+
+  .track-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--teal);
+    flex-shrink: 0;
+    box-shadow: 0 0 8px rgba(45,212,168,0.5);
+  }
+
+  .track-title {
+    font-family: var(--display);
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .track-meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    margin-bottom: 12px;
+    padding-left: 17px;
+    letter-spacing: 0.03em;
+  }
+
+  .track-desc {
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.65;
+    font-weight: 300;
+    margin-bottom: 16px;
+  }
+
+  .track-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--teal);
+    text-decoration: none;
+    letter-spacing: 0.04em;
+    padding: 6px 14px;
+    border: 1px solid rgba(45,212,168,0.2);
+    border-radius: 6px;
+    background: rgba(45,212,168,0.04);
+    transition: background 0.2s, border-color 0.2s;
+    cursor: pointer;
+  }
+  .track-cta:hover {
+    background: rgba(45,212,168,0.08);
+    border-color: rgba(45,212,168,0.4);
+  }
+
+  /* ── Demo cards ── */
+  .demo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .demo-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    transition: border-color 0.2s, transform 0.15s;
+  }
+  .demo-card:hover {
+    border-color: rgba(245,166,35,0.25);
+    transform: translateY(-2px);
+  }
+
+  .demo-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--amber);
+    background: rgba(245,166,35,0.08);
+    border: 1px solid rgba(245,166,35,0.2);
+    padding: 2px 8px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 12px;
+  }
+
+  .demo-name {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+  }
+
+  .demo-desc {
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.65;
+    font-weight: 300;
+    margin-bottom: 16px;
+  }
+
+  .file-pills {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .fpill {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 3px 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text3);
+    letter-spacing: 0.02em;
+  }
+
+  /* ── Docs table ── */
+  .docs-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .docs-table tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+    cursor: pointer;
+  }
+  .docs-table tbody tr:hover {
+    background: rgba(255,255,255,0.02);
+  }
+  .docs-table th {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text3);
+    padding: 10px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border2);
+  }
+  .docs-table td {
+    padding: 14px 16px;
+    font-size: 13px;
+    vertical-align: middle;
+  }
+  .docs-table td:first-child {
+    font-family: var(--mono);
+    color: var(--text3);
+    font-size: 11px;
+    width: 40px;
+  }
+  .docs-table td:nth-child(2) {
+    font-weight: 500;
+    color: var(--text);
+  }
+  .docs-table td:last-child {
+    color: var(--text2);
+    font-weight: 300;
+    font-size: 13px;
+  }
+
+  /* ── Inline doc viewer ── */
+  .doc-viewer {
+    display: none;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 12px;
+  }
+  .doc-viewer.open { display: block; }
+
+  .doc-viewer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+  }
+
+  .doc-viewer-title {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text2);
+    letter-spacing: 0.04em;
+  }
+
+  .doc-close {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: color 0.2s, background 0.2s;
+  }
+  .doc-close:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+
+  .doc-content {
+    padding: 28px 32px;
+    max-height: 480px;
+    overflow-y: auto;
+  }
+
+  .doc-content h1 {
+    font-family: var(--display);
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+  }
+  .doc-content h2 {
+    font-family: var(--display);
+    font-size: 16px;
+    font-weight: 700;
+    margin: 28px 0 10px;
+    color: var(--text);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .doc-content h3 {
+    font-family: var(--display);
+    font-size: 14px;
+    font-weight: 700;
+    margin: 20px 0 8px;
+    color: var(--text2);
+  }
+  .doc-content p {
+    font-size: 14px;
+    color: var(--text2);
+    line-height: 1.75;
+    margin-bottom: 14px;
+    font-weight: 300;
+  }
+  .doc-content ul, .doc-content ol {
+    padding-left: 20px;
+    margin-bottom: 14px;
+  }
+  .doc-content li {
+    font-size: 14px;
+    color: var(--text2);
+    line-height: 1.7;
+    margin-bottom: 4px;
+    font-weight: 300;
+  }
+  .doc-content code {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: rgba(255,255,255,0.06);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--accent);
+  }
+  .doc-content pre {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    overflow-x: auto;
+    margin: 16px 0;
+  }
+  .doc-content pre code {
+    background: none;
+    padding: 0;
+    color: var(--text2);
+    font-size: 12px;
+    line-height: 1.7;
+  }
+  .doc-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+  .doc-content table th {
+    text-align: left;
+    padding: 8px 14px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text3);
+    border-bottom: 1px solid var(--border2);
+  }
+  .doc-content table td {
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--text2);
+    border-bottom: 1px solid var(--border);
+  }
+  .doc-content blockquote {
+    border-left: 2px solid var(--accent);
+    padding: 4px 16px;
+    margin: 16px 0;
+    color: var(--text2);
+    font-style: italic;
+    font-size: 14px;
+  }
+  .doc-content hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 24px 0;
+  }
+  .doc-content strong { color: var(--text); font-weight: 500; }
+
+  /* ── File tree ── */
+  .tree-box {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    font-family: var(--mono);
+  }
+
+  .tree-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 0;
+    font-size: 12px;
+    color: var(--text2);
+    letter-spacing: 0.02em;
+  }
+  .tree-line.i1 { padding-left: 18px; }
+  .tree-line.i2 { padding-left: 36px; }
+  .tree-line.i3 { padding-left: 54px; }
+  .tree-icon { color: var(--text3); width: 14px; font-size: 11px; flex-shrink: 0; }
+  .tn-dir  { font-weight: 500; color: var(--text); }
+  .tn-md   { color: var(--accent); }
+  .tn-sh   { color: var(--teal); }
+  .tn-yaml { color: var(--amber); }
+  .tn-note { font-size: 10px; color: var(--text3); margin-left: 6px; font-family: var(--sans); font-weight: 300; }
+  .tree-sep { border: none; border-top: 1px solid var(--border); margin: 6px 0; }
+
+  /* ── Footer ── */
+  footer {
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid var(--border);
+    padding: 28px 32px;
+    max-width: 900px;
+    margin: 60px auto 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .footer-left {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    letter-spacing: 0.04em;
+  }
+
+  .footer-right {
+    font-size: 12px;
+    color: var(--text3);
+  }
+  .footer-right a {
+    color: var(--accent);
+    text-decoration: none;
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 12px 18px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--teal);
+    z-index: 200;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    letter-spacing: 0.03em;
+  }
+  .toast.show {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  /* ── Scroll animation ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @media (max-width: 640px) {
+    .path-grid, .track-grid, .demo-grid { grid-template-columns: 1fr; }
+    nav { padding: 0 16px; gap: 16px; }
+    .nav-links { display: none; }
+    .section { padding: 0 16px; }
+    .hero { padding-top: 100px; }
+    .hero-title { font-size: 30px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="top-bar"></div>
+
+<nav>
+  <div class="nav-logo">
+    <span></span>
+    terraform-ai-enablement
+  </div>
+  <ul class="nav-links">
+    <li><a href="#paths">paths</a></li>
+    <li><a href="#tracks">instruqt</a></li>
+    <li><a href="#demos">demos</a></li>
+    <li><a href="#docs">docs</a></li>
+    <li><a href="#structure">repo</a></li>
+  </ul>
+  <div class="nav-badge">INTERNAL</div>
+</nav>
+
+<!-- HERO -->
+<div class="section hero" id="top">
+  <div class="hero-glow"></div>
+  <div class="hero-eyebrow">HashiCorp · Technical Sales Enablement</div>
+  <h1 class="hero-title">Terraform + AI<br><em>MCP & Agentic Pipelines</em></h1>
+  <p class="hero-sub">Everything you need to understand, demo, and confidently sell Terraform's AI integrations — from guided tracks to locally-executable demos.</p>
+  <div class="hero-tags">
+    <span class="tag tag-blue">Terraform</span>
+    <span class="tag tag-teal">MCP Server</span>
+    <span class="tag tag-amber">Agentic AI</span>
+    <span class="tag tag-purple">Technical Sales</span>
+  </div>
+</div>
+
+<div class="section">
+  <div class="divider"></div>
+</div>
+
+<!-- CHOOSE YOUR PATH -->
+<div class="section" id="paths">
+  <div class="sec-header reveal">
+    <div class="sec-label">01 / Getting started</div>
+    <h2 class="sec-title">Choose your learning path</h2>
+  </div>
+
+  <div class="path-grid reveal">
+    <a class="path-card featured" href="#tracks">
+      <span class="card-rec">Recommended</span>
+      <span class="card-icon">🎮</span>
+      <div class="card-title">Guided — Instruqt</div>
+      <div class="card-desc">Browser-based, fully trackable, with quizzes at the end of each section. No local setup required.</div>
+      <div class="card-arrow card-arrow-blue">→ Jump to tracks</div>
+    </a>
+    <a class="path-card" href="#docs">
+      <span class="card-icon">📖</span>
+      <div class="card-title">Read the docs</div>
+      <div class="card-desc">Full written documentation covering concepts, architecture, use cases, and objection handling.</div>
+      <div class="card-arrow card-arrow-teal">→ Browse docs</div>
+    </a>
+    <a class="path-card" href="#demos">
+      <span class="card-icon">⚡</span>
+      <div class="card-title">MCP server demo</div>
+      <div class="card-desc">Locally executable. Run the script, follow the walkthrough, show customers in minutes.</div>
+      <div class="card-arrow card-arrow-amber">→ terraform-mcp-server/</div>
+    </a>
+    <a class="path-card" href="#demos">
+      <span class="card-icon">🤖</span>
+      <div class="card-title">Agentic pipeline demo</div>
+      <div class="card-desc">End-to-end AI pipeline demo. Full script, narration cues, and customer-ready talking points.</div>
+      <div class="card-arrow card-arrow-amber">→ terraform-agentic-ai-pipeline/</div>
+    </a>
+  </div>
+</div>
+
+<div class="section"><div class="divider"></div></div>
+
+<!-- INSTRUQT TRACKS -->
+<div class="section" id="tracks">
+  <div class="sec-header reveal">
+    <div class="sec-label">02 / Interactive learning</div>
+    <h2 class="sec-title">Instruqt tracks</h2>
+  </div>
+  <p style="color:var(--text2);font-size:14px;font-weight:300;margin-bottom:24px;max-width:580px;" class="reveal">
+    Trackable by your manager, with knowledge checks after each section. Same content as the docs — browser-based with no setup needed.
+  </p>
+
+  <div class="track-grid reveal">
+    <div class="track-card">
+      <div class="track-header">
+        <div class="track-dot"></div>
+        <div class="track-title">Terraform MCP Server</div>
+      </div>
+      <div class="track-meta">~45 min · 4 challenges · quiz included</div>
+      <div class="track-desc">Learn how Terraform exposes infrastructure operations through the Model Context Protocol, enabling AI-driven workflows.</div>
+      <button class="track-cta" onclick="showToast('Instruqt link — swap in your real URL here')">→ Open in Instruqt ↗</button>
+    </div>
+    <div class="track-card">
+      <div class="track-header">
+        <div class="track-dot"></div>
+        <div class="track-title">Terraform Agentic AI Pipeline</div>
+      </div>
+      <div class="track-meta">~60 min · 5 challenges · quiz included</div>
+      <div class="track-desc">Build and run an agentic AI pipeline that uses Terraform as the action layer for autonomous infrastructure decisions.</div>
+      <button class="track-cta" onclick="showToast('Instruqt link — swap in your real URL here')">→ Open in Instruqt ↗</button>
+    </div>
+  </div>
+</div>
+
+<div class="section"><div class="divider"></div></div>
+
+<!-- LOCAL DEMOS -->
+<div class="section" id="demos">
+  <div class="sec-header reveal">
+    <div class="sec-label">03 / Live demos</div>
+    <h2 class="sec-title">Locally executable demos</h2>
+  </div>
+  <p style="color:var(--text2);font-size:14px;font-weight:300;margin-bottom:24px;max-width:580px;" class="reveal">
+    Two self-contained demos built for live customer conversations. Each has its own setup guide, a single script to run, and step-by-step narration cues.
+  </p>
+
+  <div class="demo-grid reveal">
+    <div class="demo-card">
+      <div class="demo-label">Local demo</div>
+      <div class="demo-name">terraform-mcp-server/</div>
+      <div class="demo-desc">Spin up the Terraform MCP server and connect it to an AI client. Shows natural language mapping to Terraform operations in real time. Ideal for technical buyers.</div>
+      <div class="file-pills">
+        <span class="fpill">demo.sh</span>
+        <span class="fpill">README.md</span>
+        <span class="fpill">setup.md</span>
+      </div>
+    </div>
+    <div class="demo-card">
+      <div class="demo-label">Local demo</div>
+      <div class="demo-name">terraform-agentic-ai-pipeline/</div>
+      <div class="demo-desc">Run a complete agentic loop — from a natural language request to provisioned infrastructure — entirely on your laptop. Shows the agent's reasoning process live.</div>
+      <div class="file-pills">
+        <span class="fpill">demo.sh</span>
+        <span class="fpill">README.md</span>
+        <span class="fpill">setup.md</span>
+        <span class="fpill">pipeline-config.yaml</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section"><div class="divider"></div></div>
+
+<!-- DOCS -->
+<div class="section" id="docs">
+  <div class="sec-header reveal">
+    <div class="sec-label">04 / Reference documentation</div>
+    <h2 class="sec-title">Documentation</h2>
+  </div>
+  <p style="color:var(--text2);font-size:14px;font-weight:300;margin-bottom:24px;max-width:580px;" class="reveal">
+    Read in order or jump to what you need. Each doc links to the next. Click any row to preview the content.
+  </p>
+
+  <div class="reveal">
+    <table class="docs-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Document</th>
+          <th>What you'll learn</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr onclick="toggleDoc('doc0')">
+          <td>00</td>
+          <td>Overview</td>
+          <td>What this repo covers and how to use it</td>
+        </tr>
+        <tr>
+          <td colspan="3" style="padding:0;">
+            <div class="doc-viewer" id="doc0">
+              <div class="doc-viewer-header">
+                <span class="doc-viewer-title">docs/00-overview.md</span>
+                <button class="doc-close" onclick="event.stopPropagation();closeDoc('doc0')">✕ close</button>
+              </div>
+              <div class="doc-content" id="doc0-content"></div>
+            </div>
+          </td>
+        </tr>
+        <tr onclick="toggleDoc('doc1')">
+          <td>01</td>
+          <td>What is MCP?</td>
+          <td>Model Context Protocol explained for a technical audience</td>
+        </tr>
+        <tr>
+          <td colspan="3" style="padding:0;">
+            <div class="doc-viewer" id="doc1">
+              <div class="doc-viewer-header">
+                <span class="doc-viewer-title">docs/01-what-is-mcp.md</span>
+                <button class="doc-close" onclick="event.stopPropagation();closeDoc('doc1')">✕ close</button>
+              </div>
+              <div class="doc-content" id="doc1-content"></div>
+            </div>
+          </td>
+        </tr>
+        <tr onclick="toggleDoc('doc2')">
+          <td>02</td>
+          <td>Terraform MCP Server</td>
+          <td>How Terraform implements MCP and what it exposes</td>
+        </tr>
+        <tr>
+          <td colspan="3" style="padding:0;">
+            <div class="doc-viewer" id="doc2">
+              <div class="doc-viewer-header">
+                <span class="doc-viewer-title">docs/02-terraform-mcp-server.md</span>
+                <button class="doc-close" onclick="event.stopPropagation();closeDoc('doc2')">✕ close</button>
+              </div>
+              <div class="doc-content" id="doc2-content"></div>
+            </div>
+          </td>
+        </tr>
+        <tr onclick="toggleDoc('doc3')">
+          <td>03</td>
+          <td>Agentic AI Concepts</td>
+          <td>Agents, tools, and reasoning loops — the mental model</td>
+        </tr>
+        <tr>
+          <td colspan="3" style="padding:0;">
+            <div class="doc-viewer" id="doc3">
+              <div class="doc-viewer-header">
+                <span class="doc-viewer-title">docs/03-agentic-ai-concepts.md</span>
+                <button class="doc-close" onclick="event.stopPropagation();closeDoc('doc3')">✕ close</button>
+              </div>
+              <div class="doc-content" id="doc3-content"></div>
+            </div>
+          </td>
+        </tr>
+        <tr onclick="toggleDoc('doc4')">
+          <td>04</td>
+          <td>Agentic Pipeline Architecture</td>
+          <td>How the full pipeline fits together with Terraform</td>
+        </tr>
+        <tr>
+          <td colspan="3" style="padding:0;">
+            <div class="doc-viewer" id="doc4">
+              <div class="doc-viewer-header">
+                <span class="doc-viewer-title">docs/04-agentic-pipeline-architecture.md</span>
+                <button class="doc-close" onclick="event.stopPropagation();closeDoc('doc4')">✕ close</button>
+              </div>
+              <div class="doc-content" id="doc4-content"></div>
+            </div>
+          </td>
+        </tr>
+        <tr onclick="toggleDoc('doc5')">
+          <td>05</td>
+          <td>Use Cases &amp; Objections</td>
+          <td>Customer scenarios, value props, and objection handling</td>
+        </tr>
+        <tr>
+          <td colspan="3" style="padding:0;">
+            <div class="doc-viewer" id="doc5">
+              <div class="doc-viewer-header">
+                <span class="doc-viewer-title">docs/05-use-cases-and-objections.md</span>
+                <button class="doc-close" onclick="event.stopPropagation();closeDoc('doc5')">✕ close</button>
+              </div>
+              <div class="doc-content" id="doc5-content"></div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="section"><div class="divider"></div></div>
+
+<!-- REPO STRUCTURE -->
+<div class="section" id="structure">
+  <div class="sec-header reveal">
+    <div class="sec-label">05 / Repository layout</div>
+    <h2 class="sec-title">Structure</h2>
+  </div>
+
+  <div class="tree-box reveal">
+    <div class="tree-line"><span class="tree-icon">📁</span><span class="tn-dir">terraform-ai-enablement/</span></div>
+    <div class="tree-line i1"><span class="tree-icon">📄</span><span class="tn-md">README.md</span><span class="tn-note">← landing page + learning path chooser</span></div>
+    <div class="tree-sep"></div>
+    <div class="tree-line i1"><span class="tree-icon">📁</span><span class="tn-dir">docs/</span><span class="tn-note">← full written documentation</span></div>
+    <div class="tree-line i2"><span class="tree-icon">📄</span><span class="tn-md">00-overview.md</span></div>
+    <div class="tree-line i2"><span class="tree-icon">📄</span><span class="tn-md">01-what-is-mcp.md</span></div>
+    <div class="tree-line i2"><span class="tree-icon">📄</span><span class="tn-md">02-terraform-mcp-server.md</span></div>
+    <div class="tree-line i2"><span class="tree-icon">📄</span><span class="tn-md">03-agentic-ai-concepts.md</span></div>
+    <div class="tree-line i2"><span class="tree-icon">📄</span><span class="tn-md">04-agentic-pipeline-architecture.md</span></div>
+    <div class="tree-line i2"><span class="tree-icon">📄</span><span class="tn-md">05-use-cases-and-objections.md</span></div>
+    <div class="tree-sep"></div>
+    <div class="tree-line i1"><span class="tree-icon">📁</span><span class="tn-dir">terraform-mcp-server/</span><span class="tn-note">← local demo</span></div>
+    <div class="tree-line i2"><span class="tree-icon">📄</span><span class="tn-md">README.md</span></div>
+    <div class="tree-line i2"><span class="tree-icon">📄</span><span class="tn-md">setup.md</span></div>
+    <div class="tree-line i2"><span class="tree-icon">📄</span><span class="tn-sh">demo.sh</span></div>
+    <div class="tree-sep"></div>
+    <div class="tree-line i1"><span class="tree-icon">📁</span><span class="tn-dir">terraform-agentic-ai-pipeline/</span><span class="tn-note">← local demo</span></div>
+    <div class="tree-line i2"><span class="tree-icon">📄</span><span class="tn-md">README.md</span></div>
+    <div class="tree-line i2"><span class="tree-icon">📄</span><span class="tn-md">setup.md</span></div>
+    <div class="tree-line i2"><span class="tree-icon">📄</span><span class="tn-sh">demo.sh</span></div>
+    <div class="tree-line i2"><span class="tree-icon">📄</span><span class="tn-yaml">pipeline-config.yaml</span></div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-left">HashiCorp · Technical Sales · Internal Enablement</div>
+  <div class="footer-right">Questions? <a href="#">#se-enablement on Slack</a></div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Markdown renderer (no library, handrolled) ─────────────────────────────
+function renderMarkdown(md) {
+  let html = md
+    // Headings
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    // HR
+    .replace(/^---$/gm, '<hr>')
+    // Bold
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    // Inline code
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    // Code blocks
+    .replace(/```[\w]*\n([\s\S]*?)```/g, (_, code) => `<pre><code>${code.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</code></pre>`)
+    // Blockquote
+    .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+    // Tables
+    .replace(/\|(.+)\|\n\|[-| :]+\|\n((?:\|.+\|\n?)+)/g, (_, header, rows) => {
+      const ths = header.split('|').filter(c=>c.trim()).map(c=>`<th>${c.trim()}</th>`).join('');
+      const trs = rows.trim().split('\n').map(row => {
+        const tds = row.split('|').filter(c=>c.trim()).map(c=>`<td>${c.trim()}</td>`).join('');
+        return `<tr>${tds}</tr>`;
+      }).join('');
+      return `<table><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>`;
+    })
+    // Unordered lists
+    .replace(/((?:^- .+\n?)+)/gm, match => {
+      const items = match.trim().split('\n').map(l => `<li>${l.replace(/^- /,'')}</li>`).join('');
+      return `<ul>${items}</ul>`;
+    })
+    // Numbered lists
+    .replace(/((?:^\d+\. .+\n?)+)/gm, match => {
+      const items = match.trim().split('\n').map(l => `<li>${l.replace(/^\d+\. /,'')}</li>`).join('');
+      return `<ol>${items}</ol>`;
+    })
+    // Nav links (strip them)
+    .replace(/\*\*\[.+?\]\(.+?\)\*\*/g, '')
+    // Regular links
+    .replace(/\[(.+?)\]\(.+?\)/g, '<strong>$1</strong>')
+    // Paragraphs
+    .split('\n\n').map(block => {
+      block = block.trim();
+      if (!block) return '';
+      if (/^<[h1-6hrultbpdo]/.test(block)) return block;
+      return `<p>${block.replace(/\n/g,' ')}</p>`;
+    }).join('\n');
+  return html;
+}
+
+// ── Doc content ────────────────────────────────────────────────────────────
+const docs = {
+  doc0: `# 00 — Overview
+
+## What this repo is
+
+This repository is the central enablement resource for HashiCorp technical sales teams who need to understand, demo, and sell Terraform's AI integrations — specifically around the **Model Context Protocol (MCP)** and **agentic AI pipelines**.
+
+It is designed to be used in three ways:
+
+- **Before a customer conversation** — read the docs or take the Instruqt tracks to build confidence with the concepts.
+- **During a customer conversation** — run one of the two local demos to show a live, working example.
+- **After a customer conversation** — use the use cases and objection-handling doc to follow up with precision.
+
+## What you'll be able to do after completing this
+
+- Explain what MCP is and why Terraform's implementation matters, in plain language.
+- Describe the architecture of an agentic AI pipeline that uses Terraform as its action layer.
+- Run a live demo of either the Terraform MCP server or the agentic pipeline on your laptop.
+- Handle the most common customer objections around AI + infrastructure automation.
+
+## Recommended order
+
+If you're starting from zero, work through the docs in order (00 → 05). Each document builds on the one before it. If you're already familiar with MCP basics, you can skip to **02 — Terraform MCP Server**.
+
+If you prefer hands-on learning, start with the Instruqt tracks — they cover the same material interactively.`,
+
+  doc1: `# 01 — What is MCP?
+
+## The short version
+
+**Model Context Protocol (MCP)** is an open standard that defines how AI models communicate with external tools and systems. Think of it as a universal plug — instead of every AI application building its own custom integration with every tool, MCP provides a shared language that any AI client can use to talk to any MCP-compatible server.
+
+## The problem MCP solves
+
+Before MCP, connecting an AI model to an external tool required custom integration work on both sides. Every connection was bespoke. This created fragmentation, duplication, and limited reuse across AI platforms.
+
+MCP changes this by standardizing the interface. A tool that speaks MCP works with any AI client that speaks MCP.
+
+## How MCP works (the mental model)
+
+**MCP Server** — a process that wraps a tool or system and exposes its capabilities in a structured, standardized way. It advertises what it can do and accepts requests to use those tools.
+
+**MCP Client** — an AI model or AI-powered application that connects to one or more MCP servers, discovers their tools, and calls them as part of its reasoning process.
+
+When an AI model needs to take an action — say, run a Terraform plan — it sends a structured request to the MCP server. The server executes the operation and returns the result. The AI uses that result to decide what to do next.
+
+## Why this matters for Terraform
+
+Terraform is fundamentally an action system — it reads state, compares desired state to actual state, and makes changes. That is exactly the kind of capability an AI agent needs to manage infrastructure autonomously.
+
+By implementing MCP, Terraform becomes something an AI model can *call* — not just something a human runs from a terminal.
+
+## Key terms to know
+
+| Term | What it means |
+|------|---------------|
+| MCP | Model Context Protocol — the open standard |
+| MCP Server | The process that wraps a tool and speaks MCP |
+| MCP Client | The AI or application that connects to MCP servers |
+| Tool | A discrete capability exposed by an MCP server |
+| Tool call | When an AI model invokes a tool through MCP |`,
+
+  doc2: `# 02 — Terraform MCP Server
+
+## What it is
+
+The **Terraform MCP Server** is an implementation of the Model Context Protocol that wraps Terraform's core operations and exposes them as callable tools for AI models. It is what allows an AI agent to plan, apply, inspect, and manage Terraform-controlled infrastructure through natural language.
+
+## What the server exposes
+
+| Tool | What it does |
+|------|--------------|
+| terraform_init | Initializes a working directory |
+| terraform_plan | Generates and shows an execution plan |
+| terraform_apply | Applies changes to reach the desired state |
+| terraform_destroy | Destroys previously created infrastructure |
+| terraform_output | Reads output values from state |
+| terraform_state_list | Lists resources in the current state |
+| terraform_validate | Validates configuration files |
+
+## The key capability shift
+
+Without MCP, Terraform is operated by a human or a CI/CD pipeline running predefined scripts. The human decides what to run and when.
+
+With MCP, an AI model can receive a natural language request, translate it into Terraform operations, and handle the results — all autonomously.
+
+## What to emphasize with customers
+
+**No rip-and-replace.** The Terraform MCP Server works with existing Terraform configurations. Customers don't rewrite their IaC — they add an AI interface on top.
+
+**Policy enforcement still applies.** Sentinel policies and OPA rules enforce guardrails regardless of whether the trigger was a human or an AI agent.
+
+**Auditability is unchanged.** Every operation still runs through Terraform's plan/apply cycle. The audit trail is the same.`,
+
+  doc3: `# 03 — Agentic AI Concepts
+
+## What is an AI agent?
+
+An **AI agent** is an AI model that doesn't just respond to a single prompt — it takes a sequence of actions, uses tools, observes results, and continues reasoning until it completes a goal.
+
+The key difference from a standard AI chatbot: an agent has a **loop**.
+
+> Goal → Reason → Act → Observe → Reason → Act → Observe → ... → Done
+
+## The three things an agent needs
+
+- **A model** — the AI that does the reasoning (e.g., Claude, GPT-4, Gemini)
+- **Tools** — capabilities the model can invoke (e.g., Terraform MCP server)
+- **A goal** — the natural language task the agent is trying to complete
+
+## The reasoning loop, in detail
+
+| Step | What happens |
+|------|--------------|
+| Receive goal | The agent gets a task in natural language |
+| Plan | The model decides what actions are needed and in what order |
+| Act | The model calls a tool (e.g., terraform_plan) |
+| Observe | The model reads the tool's output |
+| Re-plan | Based on what it observed, the model decides whether to continue, adjust, or stop |
+| Complete | The goal is met — the model returns a summary |
+
+## What makes this different from automation scripts
+
+Traditional automation follows a fixed path. If something unexpected happens, it fails or requires human intervention.
+
+An AI agent can **adapt**. If a plan shows an error, the agent can reason about it, attempt a fix, re-plan, and retry — without a human in the loop.
+
+## A note on trust and control
+
+- **Human-in-the-loop checkpoints** — many production deployments require a human to approve terraform_apply even if the plan was generated by an agent.
+- **Scope limiting** — agents can be restricted to specific workspaces, regions, or resource types.
+- **Dry-run modes** — agents can be configured to plan but never apply without explicit approval.
+
+These aren't weaknesses. They're the right design for most enterprise environments.`,
+
+  doc4: `# 04 — Agentic Pipeline Architecture
+
+## Architecture overview
+
+The Terraform agentic AI pipeline connects a natural language interface to real infrastructure through a chain of components:
+
+\`\`\`
+User / Upstream System
+        │  Natural language request
+        ▼
+┌───────────────────┐
+│  AI Orchestrator  │  ← The agent (Claude, GPT-4, etc.)
+└────────┬──────────┘
+         │  MCP tool calls
+         ▼
+┌───────────────────┐
+│  Terraform MCP    │  ← Translates tool calls into Terraform ops
+│  Server           │
+└────────┬──────────┘
+         │  CLI invocations
+         ▼
+┌───────────────────┐
+│  Terraform Core   │  ← Reads state, plans, applies
+└────────┬──────────┘
+         │  API calls
+         ▼
+┌───────────────────┐
+│  Cloud Provider   │  ← AWS, Azure, GCP
+└───────────────────┘
+\`\`\`
+
+## What a complete request looks like
+
+> "Provision a dev environment in us-east-1 with the standard web-app module."
+
+1. Agent receives the request and identifies it needs to run Terraform.
+2. Agent calls \`terraform_init\` → success.
+3. Agent calls \`terraform_plan\` → reads the plan output.
+4. Agent confirms the plan looks correct and either auto-applies or surfaces it for human approval.
+5. If approved, agent calls \`terraform_apply\` → infrastructure is provisioned.
+6. Agent calls \`terraform_output\` → returns a summary to the user.
+
+**Total human interaction:** write the request, optionally approve the plan.
+
+## Design considerations for enterprise
+
+- **State backend:** HCP Terraform is strongly recommended for state locking, audit logs, and team access controls.
+- **Approval gates:** Configure agents to stop before apply and surface the plan to a human channel.
+- **Workspace scoping:** Restrict agent access to specific workspaces to limit blast radius.
+- **Variable hygiene:** Sensitive variables should be stored in Vault or HCP Vault Secrets — never passed through the agent's context window.`,
+
+  doc5: `# 05 — Use Cases & Objections
+
+## Top customer use cases
+
+### 1. Self-service developer environments
+
+A developer asks an AI assistant to spin up a dev environment. The agent provisions the correct workspace, applies the right module, and returns the endpoint — no ticket, no waiting for the platform team.
+
+**Target:** Platform engineering teams, DevEx-focused orgs, companies with high developer headcount.
+
+### 2. Autonomous incident remediation
+
+A monitoring alert fires. An AI agent assesses the situation and executes a predefined Terraform runbook to scale the affected resource before a human is even out of bed.
+
+**Target:** SRE teams, cloud ops, organizations with high-severity SLA commitments.
+
+### 3. AI-assisted infrastructure review
+
+A developer opens a Terraform PR. An AI agent reads the plan and posts a structured review — flagging cost implications, security concerns, and policy violations.
+
+**Target:** Any org doing code review on IaC. Especially useful where infrastructure review is a bottleneck.
+
+### 4. Natural language infrastructure queries
+
+A product manager asks "how many instances are we running in production and what are they costing?" The agent queries Terraform state and returns a plain-language answer.
+
+**Target:** Orgs with mixed technical/non-technical stakeholders, FinOps-focused teams.
+
+---
+
+## Common objections and how to handle them
+
+**"We don't trust AI to touch production infrastructure."**
+
+That's the right instinct, and the architecture supports it. You can configure the agent to plan but never apply — every apply requires a human approval step. Most customers start there and expand the automation scope as confidence grows.
+
+**"How do we know what the AI actually did?"**
+
+The audit trail is identical to what you have today. Every operation runs through Terraform's plan/apply cycle. HCP Terraform logs every run, who triggered it, the plan output, and the apply results.
+
+**"We're worried about the AI making expensive mistakes."**
+
+Sentinel and OPA policies still run. Cost estimation still runs. If an operation would exceed a cost threshold or violate a policy, it gets blocked — regardless of whether the requester was a human or an agent.
+
+**"We already have automation. Why do we need this?"**
+
+Scripts handle the paths you anticipated. Agents handle the paths you didn't. When something unexpected happens, a script fails. An agent can reason about the situation, try a recovery step, and escalate only when it genuinely needs a human.`
+};
+
+// ── Toggle doc viewer ──────────────────────────────────────────────────────
+function toggleDoc(id) {
+  const viewer = document.getElementById(id);
+  const isOpen = viewer.classList.contains('open');
+
+  // Close all
+  document.querySelectorAll('.doc-viewer.open').forEach(v => v.classList.remove('open'));
+
+  if (!isOpen) {
+    viewer.classList.add('open');
+    const content = document.getElementById(id + '-content');
+    if (!content.innerHTML) {
+      content.innerHTML = renderMarkdown(docs[id]);
+    }
+    setTimeout(() => viewer.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+  }
+}
+
+function closeDoc(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = '⚠ ' + msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── Scroll reveal ──────────────────────────────────────────────────────────
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      observer.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
