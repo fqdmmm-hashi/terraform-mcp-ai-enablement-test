@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Terraform + AI · Internal Enablement</title>
+<title>PREVIEW · Terraform + AI · Internal Enablement</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
@@ -118,7 +118,7 @@
   }
   .hero-title {
     font-size: clamp(42px, 6vw, 68px); font-weight: 800; line-height: 1.0;
-    letter-spacing: -0.03em; margin-bottom: 26px; color: #6C81FF;
+    letter-spacing: -0.03em; margin-bottom: 26px; color: var(--text);
     opacity: 0; animation: fadeUp 0.55s ease forwards 0.2s;
   }
   .hero-sub {
@@ -148,14 +148,9 @@
   .sec-header { margin-bottom: 28px; }
   .sec-label {
     font-size: 11px; font-weight: 600; font-family: 'JetBrains Mono', monospace;
-    letter-spacing: 0.12em; text-transform: uppercase; color: var(--g0); margin-bottom: 10px;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--text3); margin-bottom: 10px;
   }
-  .sec-title {
-    font-size: 30px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15;
-    display: inline-block;
-    background: linear-gradient(90deg, var(--g0) 0%, var(--g1) 35%, var(--g2) 70%, var(--g3) 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-  }
+  .sec-title { display: inline-block; font-size: 30px; font-weight: 800; letter-spacing: -0.02em; color: var(--text); line-height: 1.15; }
   .sec-sub { font-size: 17px; font-weight: 400; color: var(--text2); max-width: 580px; margin-top: 10px; line-height: 1.65; }
 
   .card-base {
@@ -177,7 +172,7 @@
     padding: 3px 9px; border-radius: 20px;
   }
   .card-icon { font-size: 24px; margin-bottom: 14px; display: block; line-height: 1; }
-  .card-title { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; color: var(--text2); margin-bottom: 8px; line-height: 1.2; }
+  .card-title { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; color: var(--text); margin-bottom: 8px; line-height: 1.2; }
   .card-desc { font-size: 15px; font-weight: 400; color: var(--text2); line-height: 1.6; margin-bottom: 18px; }
   .card-arrow { font-size: 13px; font-weight: 600; font-family: 'JetBrains Mono', monospace; color: var(--tag-text); }
   .card-arrow-pink  { color: #c03050; } [data-theme="dark"] .card-arrow-pink  { color: #ff9aaa; }
@@ -195,7 +190,7 @@
     0%,100% { box-shadow: 0 0 0 3px var(--track-hover); }
     50%      { box-shadow: 0 0 0 7px transparent; }
   }
-  .track-title { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; color: var(--text2); }
+  .track-title { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; color: var(--text); }
   .track-meta { font-size: 12px; font-family: 'JetBrains Mono', monospace; color: var(--text3); margin-bottom: 14px; padding-left: 18px; }
   .track-desc { font-size: 15px; font-weight: 400; color: var(--text2); line-height: 1.65; margin-bottom: 20px; }
   .track-cta {
@@ -312,6 +307,23 @@
   .reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.5s ease, transform 0.5s ease; }
   .reveal.visible { opacity: 1; transform: translateY(0); }
 
+  /* === PREVIEW OVERRIDES === */
+  .sec-label { color: var(--g0) !important; }
+  .sec-title { display: inline-block;
+    background: linear-gradient(90deg, var(--g0) 0%, var(--g1) 35%, var(--g2) 70%, var(--g3) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    color: transparent !important;
+  }
+  .hero-title { color: #6C81FF !important; }
+  .card-title { color: var(--text2) !important; }
+  .track-title { color: var(--text2) !important; }
+  .preview-banner {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999;
+    background: linear-gradient(90deg, var(--g0), var(--g1), var(--g2), var(--g3));
+    color: white; text-align: center; font-size: 12px; font-weight: 700;
+    font-family: "JetBrains Mono", monospace; letter-spacing: 0.1em;
+    padding: 7px; text-transform: uppercase;
+  }
 </style>
 </head>
 <body>
@@ -499,6 +511,7 @@
   <div class="footer-right">Questions? <a href="#">#proj-instruqt</a> &nbsp;·&nbsp; <a href="#">#proj-cdl-demos</a></div>
 </footer>
 <div class="toast" id="toast"></div>
+<div class="preview-banner">⚠ Preview — changes not yet applied to index.html</div>
 
 <script>
 function toggleTheme() {
